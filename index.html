@@ -1035,11 +1035,13 @@
         return;
       }
 
+      // Use created_at for the main dashboard order.
+      // Reason: older manual test rows may have captured_at = null, and PostgreSQL can sort nulls before real timestamps when ordering DESC.
+      // created_at always exists, so the latest ESP32 upload appears first reliably.
       const { data, error } = await client
         .from(TABLE_NAME)
         .select("*")
         .eq("device_id", DEVICE_ID)
-        .order("captured_at", { ascending: false })
         .order("created_at", { ascending: false })
         .limit(500);
 
