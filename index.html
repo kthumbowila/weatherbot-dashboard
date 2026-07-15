@@ -3,129 +3,204 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>WeatherBot Live Dashboard</title>
+  <title>WeatherBot Liquid Glass Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
-      --bg: #07111f;
-      --panel: #111d31;
-      --panel2: #172842;
-      --text: #f7fbff;
-      --muted: #9fb1c7;
-      --accent: #67e8f9;
-      --good: #65ff9a;
-      --warn: #ffd166;
-      --bad: #ff6b6b;
-      --line: rgba(255,255,255,0.11);
+      --bg0: #06111f;
+      --bg1: #0b1b32;
+      --glass: rgba(255, 255, 255, 0.105);
+      --glass2: rgba(255, 255, 255, 0.075);
+      --stroke: rgba(255, 255, 255, 0.22);
+      --stroke2: rgba(255, 255, 255, 0.12);
+      --text: #f8fbff;
+      --muted: rgba(236, 246, 255, 0.68);
+      --blue: #75e8ff;
+      --green: #80ffb0;
+      --yellow: #ffd166;
+      --red: #ff758f;
+      --shadow: rgba(0, 0, 0, 0.32);
     }
 
     * { box-sizing: border-box; }
 
+    html { scroll-behavior: smooth; }
+
     body {
       margin: 0;
       min-height: 100vh;
-      font-family: Arial, Helvetica, sans-serif;
-      background:
-        radial-gradient(circle at top left, rgba(103,232,249,0.18), transparent 32rem),
-        radial-gradient(circle at bottom right, rgba(101,255,154,0.12), transparent 28rem),
-        var(--bg);
+      font-family: Inter, Arial, Helvetica, sans-serif;
       color: var(--text);
+      background:
+        radial-gradient(circle at 15% 10%, rgba(117,232,255,0.30), transparent 30rem),
+        radial-gradient(circle at 85% 18%, rgba(128,255,176,0.18), transparent 28rem),
+        radial-gradient(circle at 45% 100%, rgba(180,120,255,0.16), transparent 35rem),
+        linear-gradient(135deg, var(--bg0), var(--bg1));
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(115deg, transparent 0%, rgba(255,255,255,0.06) 38%, transparent 58%),
+        radial-gradient(circle at 50% 50%, transparent, rgba(0,0,0,0.20));
+      mix-blend-mode: screen;
     }
 
     .wrap {
-      width: min(1120px, 94vw);
+      width: min(1220px, 94vw);
       margin: 0 auto;
-      padding: 28px 0 40px;
+      padding: 26px 0 50px;
+    }
+
+    .liquid {
+      position: relative;
+      border: 1px solid var(--stroke);
+      background:
+        linear-gradient(145deg, rgba(255,255,255,0.16), rgba(255,255,255,0.055)),
+        var(--glass);
+      box-shadow: 0 22px 70px var(--shadow), inset 0 1px 0 rgba(255,255,255,0.24);
+      backdrop-filter: blur(22px) saturate(150%);
+      -webkit-backdrop-filter: blur(22px) saturate(150%);
+      overflow: hidden;
+    }
+
+    .liquid::after {
+      content: "";
+      position: absolute;
+      inset: 1px;
+      border-radius: inherit;
+      pointer-events: none;
+      background: linear-gradient(135deg, rgba(255,255,255,0.23), transparent 34%, rgba(255,255,255,0.05) 100%);
+      opacity: 0.72;
     }
 
     header {
       display: flex;
       justify-content: space-between;
-      gap: 18px;
       align-items: center;
-      padding: 22px;
-      border: 1px solid var(--line);
-      border-radius: 24px;
-      background: linear-gradient(135deg, rgba(17,29,49,0.96), rgba(23,40,66,0.90));
-      box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+      gap: 20px;
+      padding: 24px;
+      border-radius: 30px;
     }
 
     .brand h1 {
       margin: 0;
-      font-size: clamp(1.7rem, 4vw, 3rem);
-      letter-spacing: -0.04em;
+      font-size: clamp(2rem, 5vw, 4rem);
+      letter-spacing: -0.06em;
+      line-height: 0.95;
     }
 
     .brand p {
-      margin: 8px 0 0;
+      margin: 10px 0 0;
       color: var(--muted);
-      font-size: 0.98rem;
+      font-size: 1rem;
     }
 
     .status-pill {
-      border: 1px solid var(--line);
+      position: relative;
+      z-index: 2;
+      border: 1px solid var(--stroke);
       border-radius: 999px;
-      padding: 10px 14px;
+      padding: 11px 16px;
       white-space: nowrap;
       color: var(--muted);
-      background: rgba(255,255,255,0.04);
-      font-weight: 700;
+      background: rgba(255,255,255,0.09);
+      font-weight: 850;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.18);
     }
 
-    .status-pill.good { color: var(--good); }
-    .status-pill.warn { color: var(--warn); }
-    .status-pill.bad { color: var(--bad); }
+    .status-pill.good { color: var(--green); }
+    .status-pill.warn { color: var(--yellow); }
+    .status-pill.bad { color: var(--red); }
 
     .grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(4, 1fr);
       gap: 16px;
       margin-top: 18px;
     }
 
     .card {
-      background: rgba(17,29,49,0.88);
-      border: 1px solid var(--line);
-      border-radius: 22px;
+      border-radius: 26px;
       padding: 20px;
-      box-shadow: 0 14px 35px rgba(0,0,0,0.18);
+      min-height: 132px;
     }
 
-    .card.wide { grid-column: span 3; }
-    .card.two { grid-column: span 2; }
+    .card.wide { grid-column: span 4; }
+    .card.half { grid-column: span 2; }
 
     .label {
       color: var(--muted);
-      font-size: 0.78rem;
+      font-size: 0.76rem;
       text-transform: uppercase;
-      letter-spacing: 0.12em;
-      font-weight: 800;
+      letter-spacing: 0.13em;
+      font-weight: 900;
     }
 
     .value {
       margin-top: 10px;
-      font-size: clamp(2rem, 5vw, 3.6rem);
-      font-weight: 900;
-      letter-spacing: -0.06em;
+      font-size: clamp(2.1rem, 5vw, 3.8rem);
+      font-weight: 950;
+      letter-spacing: -0.065em;
       line-height: 1;
     }
 
-    .unit { color: var(--muted); font-size: 0.95rem; margin-left: 4px; }
-    .small-value { margin-top: 10px; font-size: 1.25rem; font-weight: 800; }
+    .unit { color: var(--muted); font-size: 0.95rem; margin-left: 4px; letter-spacing: 0; }
+    .small-value { margin-top: 12px; font-size: 1.22rem; font-weight: 850; line-height: 1.28; }
     .muted { color: var(--muted); }
 
-    .chart-box {
-      height: 210px;
-      margin-top: 16px;
-      background: rgba(255,255,255,0.03);
-      border: 1px solid var(--line);
+    .mini-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .mini {
       border-radius: 18px;
+      padding: 12px;
+      border: 1px solid var(--stroke2);
+      background: rgba(255,255,255,0.055);
+    }
+
+    .mini strong { display: block; margin-top: 5px; font-size: 1.2rem; }
+
+    .battery-track {
+      width: 100%;
+      height: 13px;
+      border-radius: 999px;
+      border: 1px solid var(--stroke);
+      margin-top: 18px;
+      overflow: hidden;
+      background: rgba(255,255,255,0.08);
+    }
+
+    .battery-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--red), var(--yellow), var(--green));
+      transition: width 350ms ease;
+    }
+
+    .chart-box {
+      height: 245px;
+      margin-top: 16px;
+      background: rgba(255,255,255,0.045);
+      border: 1px solid var(--stroke2);
+      border-radius: 22px;
       padding: 10px;
     }
 
     canvas { width: 100%; height: 100%; display: block; }
 
     table {
+      position: relative;
+      z-index: 2;
       width: 100%;
       border-collapse: collapse;
       margin-top: 12px;
@@ -134,11 +209,134 @@
 
     th, td {
       padding: 11px 8px;
-      border-bottom: 1px solid var(--line);
+      border-bottom: 1px solid var(--stroke2);
       text-align: left;
+      vertical-align: top;
     }
 
-    th { color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; }
+    th { color: var(--muted); font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.08em; }
+
+    .actions {
+      position: relative;
+      z-index: 4;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+      align-items: center;
+    }
+
+    button, select, input {
+      border: 1px solid var(--stroke);
+      border-radius: 14px;
+      padding: 11px 13px;
+      background: rgba(255,255,255,0.10);
+      color: var(--text);
+      outline: none;
+      font-weight: 800;
+    }
+
+    option { color: #06111f; }
+
+    button { cursor: pointer; }
+    button.danger { color: #ffd6dc; border-color: rgba(255,117,143,0.6); }
+
+
+
+    .badge-row {
+      position: relative;
+      z-index: 3;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid var(--stroke2);
+      border-radius: 999px;
+      padding: 9px 12px;
+      background: rgba(255,255,255,0.08);
+      font-size: 0.88rem;
+      font-weight: 850;
+      color: var(--muted);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.16);
+    }
+
+    .badge.good { color: var(--green); border-color: rgba(128,255,176,0.36); }
+    .badge.warn { color: var(--yellow); border-color: rgba(255,209,102,0.42); }
+    .badge.bad { color: var(--red); border-color: rgba(255,117,143,0.48); }
+    .badge.info { color: var(--blue); border-color: rgba(117,232,255,0.36); }
+
+    .stat-grid, .health-grid {
+      position: relative;
+      z-index: 3;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .health-grid { grid-template-columns: repeat(2, 1fr); }
+
+    .stat-cell, .health-cell {
+      border-radius: 18px;
+      padding: 12px;
+      border: 1px solid var(--stroke2);
+      background: rgba(255,255,255,0.055);
+      min-height: 68px;
+    }
+
+    .stat-cell span, .health-cell span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 900;
+    }
+
+    .stat-cell strong, .health-cell strong {
+      display: block;
+      margin-top: 6px;
+      font-size: 1.12rem;
+      line-height: 1.2;
+      word-break: break-word;
+    }
+
+    .qr-layout {
+      position: relative;
+      z-index: 3;
+      display: grid;
+      grid-template-columns: 138px 1fr;
+      gap: 16px;
+      align-items: center;
+      margin-top: 14px;
+    }
+
+    .qr-img {
+      width: 138px;
+      height: 138px;
+      border-radius: 18px;
+      padding: 10px;
+      background: rgba(255,255,255,0.92);
+      border: 1px solid rgba(255,255,255,0.45);
+    }
+
+    .dashboard-link {
+      display: inline-block;
+      color: var(--blue);
+      font-weight: 900;
+      margin-top: 8px;
+      overflow-wrap: anywhere;
+      text-decoration: none;
+      border-bottom: 1px solid rgba(117,232,255,0.45);
+    }
+
+    .dashboard-link:hover { color: var(--green); border-bottom-color: rgba(128,255,176,0.65); }
 
     .footer-note {
       margin-top: 18px;
@@ -148,28 +346,59 @@
     }
 
     .error-box {
-      border: 1px solid rgba(255,107,107,0.45);
-      color: #ffd7d7;
-      background: rgba(255,107,107,0.12);
-      border-radius: 18px;
+      border: 1px solid rgba(255,117,143,0.55);
+      color: #ffe1e6;
+      background: rgba(255,117,143,0.14);
+      border-radius: 22px;
       padding: 15px;
       margin-top: 16px;
       display: none;
     }
 
-    @media (max-width: 820px) {
+    .screen-off {
+      position: fixed;
+      z-index: 50;
+      inset: 0;
+      display: none;
+      place-items: center;
+      background: rgba(3, 8, 15, 0.86);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      color: var(--muted);
+      text-align: center;
+      padding: 30px;
+    }
+
+    .screen-off.active { display: grid; }
+    .screen-off h2 { color: var(--text); margin: 0 0 8px; }
+
+    @media (max-width: 980px) {
+      .grid { grid-template-columns: repeat(2, 1fr); }
+      .card.wide, .card.half { grid-column: span 2; }
+    }
+
+    @media (max-width: 660px) {
       header { flex-direction: column; align-items: flex-start; }
       .grid { grid-template-columns: 1fr; }
-      .card.wide, .card.two { grid-column: span 1; }
+      .card.wide, .card.half { grid-column: span 1; }
+      .mini-row, .stat-grid, .health-grid, .qr-layout { grid-template-columns: 1fr; }
+      .qr-img { width: 128px; height: 128px; }
+      .table-scroll { overflow-x: auto; }
     }
   </style>
 </head>
 <body>
+  <div id="screenOff" class="screen-off">
+    <div>
+      <h2>WeatherBot display sleeping</h2>
+      <p>Move the mouse, press a key, touch, or click to wake the dashboard.</p>
+    </div>
+  </div>
+
   <div class="wrap">
-    <header>
+    <header class="liquid">
       <div class="brand">
-        <h1>🤖 WeatherBot Live</h1>
-        <p>EE2323 Portable Weather Station · Free GitHub Pages Dashboard</p>
+        <h1>🤖 WeatherBot</h1>
       </div>
       <div id="connectionStatus" class="status-pill warn">Loading...</div>
     </header>
@@ -177,75 +406,200 @@
     <div id="errorBox" class="error-box"></div>
 
     <section class="grid">
-      <div class="card">
+      <div class="card liquid">
         <div class="label">Temperature</div>
         <div class="value"><span id="tempValue">--</span><span class="unit">°C</span></div>
       </div>
 
-      <div class="card">
+      <div class="card liquid">
         <div class="label">Humidity</div>
         <div class="value"><span id="humValue">--</span><span class="unit">%</span></div>
       </div>
 
-      <div class="card">
+      <div class="card liquid">
         <div class="label">Heat Index</div>
         <div class="value"><span id="heatValue">--</span><span class="unit">°C</span></div>
       </div>
 
-      <div class="card">
+      <div class="card liquid">
+        <div class="label">Battery</div>
+        <div id="batteryValue" class="small-value">--</div>
+        <div class="battery-track"><div id="batteryFill" class="battery-fill"></div></div>
+      </div>
+
+      <div class="card half liquid">
+        <div class="label">Today Temperature</div>
+        <div class="mini-row">
+          <div class="mini"><span class="muted">Min</span><strong id="todayTempMin">--</strong></div>
+          <div class="mini"><span class="muted">Max</span><strong id="todayTempMax">--</strong></div>
+          <div class="mini"><span class="muted">Avg</span><strong id="todayTempAvg">--</strong></div>
+        </div>
+      </div>
+
+      <div class="card half liquid">
+        <div class="label">Today Humidity</div>
+        <div class="mini-row">
+          <div class="mini"><span class="muted">Min</span><strong id="todayHumMin">--</strong></div>
+          <div class="mini"><span class="muted">Max</span><strong id="todayHumMax">--</strong></div>
+          <div class="mini"><span class="muted">Avg</span><strong id="todayHumAvg">--</strong></div>
+        </div>
+      </div>
+
+      <div class="card liquid">
         <div class="label">Comfort</div>
         <div id="comfortValue" class="small-value">--</div>
       </div>
 
-      <div class="card">
+      <div class="card liquid">
         <div class="label">System</div>
         <div id="systemValue" class="small-value">--</div>
       </div>
 
-      <div class="card">
+      <div class="card liquid">
         <div class="label">Last Update</div>
         <div id="lastUpdateValue" class="small-value">--</div>
       </div>
 
-      <div class="card wide">
-        <div class="label">Reading History</div>
-        <div class="chart-box"><canvas id="historyChart"></canvas></div>
+      <div class="card liquid">
+        <div class="label">Offline Uploads</div>
+        <div id="queuedValue" class="small-value">--</div>
       </div>
 
-      <div class="card wide">
+
+      <div class="card wide liquid">
+        <div class="label">Alert Badges</div>
+        <div id="alertBadges" class="badge-row">
+          <span class="badge info">Loading alerts...</span>
+        </div>
+      </div>
+
+      <div class="card half liquid">
+        <div class="label">Last 24h Statistics</div>
+        <div class="stat-grid">
+          <div class="stat-cell"><span>Readings</span><strong id="stat24Readings">--</strong></div>
+          <div class="stat-cell"><span>Temp Min</span><strong id="stat24TempMin">--</strong></div>
+          <div class="stat-cell"><span>Temp Max</span><strong id="stat24TempMax">--</strong></div>
+          <div class="stat-cell"><span>Temp Avg</span><strong id="stat24TempAvg">--</strong></div>
+          <div class="stat-cell"><span>Hum Min</span><strong id="stat24HumMin">--</strong></div>
+          <div class="stat-cell"><span>Hum Max</span><strong id="stat24HumMax">--</strong></div>
+          <div class="stat-cell"><span>Hum Avg</span><strong id="stat24HumAvg">--</strong></div>
+          <div class="stat-cell"><span>Heat Max</span><strong id="stat24HeatMax">--</strong></div>
+          <div class="stat-cell"><span>Queued</span><strong id="stat24Queued">--</strong></div>
+        </div>
+      </div>
+
+      <div class="card half liquid">
+        <div class="label">Device Health</div>
+        <div class="health-grid">
+          <div class="health-cell"><span>WiFi</span><strong id="healthWifi">--</strong></div>
+          <div class="health-cell"><span>RSSI</span><strong id="healthRssi">--</strong></div>
+          <div class="health-cell"><span>Sensor</span><strong id="healthSensor">--</strong></div>
+          <div class="health-cell"><span>RTC</span><strong id="healthRtc">--</strong></div>
+          <div class="health-cell"><span>Firmware</span><strong id="healthFirmware">--</strong></div>
+          <div class="health-cell"><span>Data Age</span><strong id="healthDataAge">--</strong></div>
+          <div class="health-cell"><span>Cloud Mode</span><strong id="healthCloud">--</strong></div>
+          <div class="health-cell"><span>Battery</span><strong id="healthBattery">--</strong></div>
+        </div>
+      </div>
+
+      <div class="card wide liquid">
+        <div class="label">QR Code Card</div>
+        <div class="qr-layout">
+          <img id="qrImage" class="qr-img" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAZoAAAGaAQAAAAAefbjOAAADCElEQVR4nO2cQW7bMBBF31QCvFSAHCBHoW7QI/Vq0lFygALiMgCF3wVJiU4XReFAdqzRirH9YBIeDP/8IWPiv5/5x/8z4JBDDjnkkEMOPSdk5emBaGYjbKPV8shse+NbrMmhm6AgSVqA+S2hidVspBPzSyegkyTpGjpueg4dD9XMYL/ee2yMF8HwYfsHSwa50/QcuifUCYaEpniR9L7tFV//TQ49INR/fmF++zBmAxgSxpB6Ee81PYcOh2pEDAIiEKYVoEsQDQFZPbRO1oOvyaEvgGYzM3sBiBcRFrCRTjbGHhtZc6lxr+k5dHSOaBPAkLbRh+VNJGeQG7/Joe8BkavKsAClyExlNA0Jaemu35U0PfiaHLoFovzItcKoz/ZnDgvQBMW38Ih4ZuhzjiDsRtQgNfESli18HnxNDn0FNCTyNjFBHcVNbQLML39Bx03PocMgah6oG0ZOBUsngoqO0JT3jy1lPPiaHLoFanVEUEJTlZc5GLS9NoHriBNANUcsnYqAHBI5ZYQsMLZgWFxHnAHaIqIEAwxFWeZWaK46YEseHhFPDlG73OWHJ6jWnJsfkUMlpwyPiGeHqmcZX0yw9iUu4kUW3nuA1RTeezRbV9Xng6/JoVug6kcokTXDdZlBWKpX5TriHFCza7SnpKpXtRch+4c9Ik4AZaUw11NSxaaKPYRlrR3P3eP+Fmty6LYcsdlPWqCY2tfyUq4sTwE1fY29rtA07B5F7X26jjgH1CjLJjZKa6sew57w3udpoHqqLr7KoEsidgmGBc1vCRFfMQAL+6mZB1+TQ7dDu3dt5cpOsSLM3qo5RT5fd4/pOXR4jqjlRMkRxvDbBJ2Yf649xNcErKajp+fQ4RBNDaHlqocxNc62mpHriKeG2jNUxZ9U0+HYo6Scr/OIOB8UzXaHykagRInriFNAf93pYliwoLW3MKlc8SIamkfvdJ0B+nynS8Q+CaC0QuNFzGOXmkvBj74mh26Btk4X0FwCboxLaP1s1xHPDpn+/ZnPj/9nMocccsghhxxyCOAP/3SHN4s6ZYoAAAAASUVORK5CYII=" alt="WeatherBot dashboard QR code" />
+          <div>
+            <div class="small-value">Scan to open the live WeatherBot dashboard</div>
+            <a id="publicDashboardLink" class="dashboard-link" href="https://kthumbowila.github.io/weatherbot-dashboard/" target="_blank" rel="noopener">https://kthumbowila.github.io/weatherbot-dashboard/</a>
+            <p class="muted">This is a real clickable web link, not a Windows folder path.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card half liquid">
+        <div class="label">Temperature Graph</div>
+        <div class="chart-box"><canvas id="tempChart"></canvas></div>
+      </div>
+
+      <div class="card half liquid">
+        <div class="label">Humidity Graph</div>
+        <div class="chart-box"><canvas id="humChart"></canvas></div>
+      </div>
+
+      <div class="card wide liquid">
+        <div class="label">Daily Summaries</div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Readings</th>
+                <th>Temp Min</th>
+                <th>Temp Max</th>
+                <th>Temp Avg</th>
+                <th>Hum Min</th>
+                <th>Hum Max</th>
+                <th>Hum Avg</th>
+              </tr>
+            </thead>
+            <tbody id="summaryTable">
+              <tr><td colspan="8" class="muted">Loading summaries...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card wide liquid">
         <div class="label">Recent Readings</div>
-        <table>
-          <thead>
-            <tr>
-              <th>Time</th>
-              <th>Temp</th>
-              <th>Humidity</th>
-              <th>Heat Index</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody id="readingTable">
-            <tr><td colspan="5" class="muted">Loading readings...</td></tr>
-          </tbody>
-        </table>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Temp</th>
+                <th>Humidity</th>
+                <th>Heat Index</th>
+                <th>Battery</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="readingTable">
+              <tr><td colspan="6" class="muted">Loading readings...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card wide liquid">
+        <div class="label">Settings</div>
+        <div class="actions">
+          <label class="muted" for="webTimeout">Web screen timeout</label>
+          <select id="webTimeout">
+            <option value="0">Always on</option>
+            <option value="30000">30 sec</option>
+            <option value="60000">60 sec</option>
+            <option value="120000">120 sec</option>
+            <option value="300000">5 min</option>
+          </select>
+          <input id="resetToken" type="password" placeholder="Device reset token" />
+          <button id="resetButton" class="danger">Reset database data</button>
+          <span id="resetStatus" class="muted"></span>
+        </div>
       </div>
     </section>
 
     <div class="footer-note">
-      Auto-refreshes every 10 seconds. First version uses Supabase Free + GitHub Pages Free.
+      Auto-refreshes every 10 seconds. Daily summaries use Sri Lanka date grouping from Supabase. Public link is shown as a clickable URL in the QR card.
     </div>
   </div>
 
   <script>
-    // ==========================================================
-    // STEP 1: Replace these two values from your Supabase project
-    // Supabase Dashboard → Project Settings → Data API
-    // ==========================================================
+    // Paste the same values you used in the old dashboard.
     const SUPABASE_URL = "https://gzvlsaeksxjhhmzwoume.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd6dmxzYWVrc3hqaGhtendvdW1lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMTI2OTAsImV4cCI6MjA5OTU4ODY5MH0.De31bkyrSn3uxfJBNlno3vWfJh9n-0JYaLtmxaK43eY";
+    const SUPABASE_ANON_KEY = "sb_publishable_vtE5VF9hdmjeIYOEwgqpwQ_hO1ujcaa";
 
     const TABLE_NAME = "weather_readings";
+    const DAILY_VIEW_NAME = "weather_daily_summary";
     const DEVICE_ID = "weatherbot-001";
+    const DASHBOARD_PUBLIC_URL = "https://kthumbowila.github.io/weatherbot-dashboard/";
 
     const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -255,11 +609,47 @@
       tempValue: document.getElementById("tempValue"),
       humValue: document.getElementById("humValue"),
       heatValue: document.getElementById("heatValue"),
+      batteryValue: document.getElementById("batteryValue"),
+      batteryFill: document.getElementById("batteryFill"),
+      todayTempMin: document.getElementById("todayTempMin"),
+      todayTempMax: document.getElementById("todayTempMax"),
+      todayTempAvg: document.getElementById("todayTempAvg"),
+      todayHumMin: document.getElementById("todayHumMin"),
+      todayHumMax: document.getElementById("todayHumMax"),
+      todayHumAvg: document.getElementById("todayHumAvg"),
       comfortValue: document.getElementById("comfortValue"),
       systemValue: document.getElementById("systemValue"),
       lastUpdateValue: document.getElementById("lastUpdateValue"),
+      queuedValue: document.getElementById("queuedValue"),
+      alertBadges: document.getElementById("alertBadges"),
+      stat24Readings: document.getElementById("stat24Readings"),
+      stat24TempMin: document.getElementById("stat24TempMin"),
+      stat24TempMax: document.getElementById("stat24TempMax"),
+      stat24TempAvg: document.getElementById("stat24TempAvg"),
+      stat24HumMin: document.getElementById("stat24HumMin"),
+      stat24HumMax: document.getElementById("stat24HumMax"),
+      stat24HumAvg: document.getElementById("stat24HumAvg"),
+      stat24HeatMax: document.getElementById("stat24HeatMax"),
+      stat24Queued: document.getElementById("stat24Queued"),
+      healthWifi: document.getElementById("healthWifi"),
+      healthRssi: document.getElementById("healthRssi"),
+      healthSensor: document.getElementById("healthSensor"),
+      healthRtc: document.getElementById("healthRtc"),
+      healthFirmware: document.getElementById("healthFirmware"),
+      healthDataAge: document.getElementById("healthDataAge"),
+      healthCloud: document.getElementById("healthCloud"),
+      healthBattery: document.getElementById("healthBattery"),
+      publicDashboardLink: document.getElementById("publicDashboardLink"),
+      qrImage: document.getElementById("qrImage"),
       readingTable: document.getElementById("readingTable"),
-      chart: document.getElementById("historyChart")
+      summaryTable: document.getElementById("summaryTable"),
+      tempChart: document.getElementById("tempChart"),
+      humChart: document.getElementById("humChart"),
+      webTimeout: document.getElementById("webTimeout"),
+      screenOff: document.getElementById("screenOff"),
+      resetToken: document.getElementById("resetToken"),
+      resetButton: document.getElementById("resetButton"),
+      resetStatus: document.getElementById("resetStatus")
     };
 
     function showError(message) {
@@ -272,25 +662,42 @@
       els.errorBox.textContent = "";
     }
 
+    function n(value) {
+      const x = Number(value);
+      return Number.isFinite(x) ? x : null;
+    }
+
     function fmtNumber(value, digits = 1) {
-      if (value === null || value === undefined || Number.isNaN(Number(value))) return "--";
-      return Number(value).toFixed(digits);
+      const x = n(value);
+      return x === null ? "--" : x.toFixed(digits);
+    }
+
+    function readingTime(row) {
+      return row?.captured_at || row?.created_at || null;
     }
 
     function fmtTime(iso) {
       if (!iso) return "--";
       return new Date(iso).toLocaleString([], {
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit"
+        month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit"
       });
     }
 
-    function getDeviceFreshness(createdAt) {
-      if (!createdAt) return { label: "No data", cls: "bad" };
-      const ageMs = Date.now() - new Date(createdAt).getTime();
+    function fmtDate(value) {
+      if (!value) return "--";
+      return new Date(`${value}T00:00:00`).toLocaleDateString([], { year: "numeric", month: "short", day: "numeric" });
+    }
+
+    function localDayKey(iso) {
+      if (!iso) return "";
+      const d = new Date(iso);
+      return d.toLocaleDateString("en-CA", { timeZone: "Asia/Colombo" });
+    }
+
+    function getDeviceFreshness(row) {
+      const time = readingTime(row);
+      if (!time) return { label: "No data", cls: "bad" };
+      const ageMs = Date.now() - new Date(time).getTime();
       const ageMin = ageMs / 60000;
       if (ageMin <= 2) return { label: "Online", cls: "good" };
       if (ageMin <= 10) return { label: "Recently active", cls: "warn" };
@@ -302,50 +709,218 @@
       els.connectionStatus.textContent = freshness.label;
     }
 
-    function drawChart(rows) {
-      const canvas = els.chart;
+    function avg(values) {
+      const clean = values.map(n).filter(v => v !== null);
+      if (!clean.length) return null;
+      return clean.reduce((a, b) => a + b, 0) / clean.length;
+    }
+
+    function renderTodayStats(rows) {
+      const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Colombo" });
+      const todayRows = rows.filter(r => localDayKey(readingTime(r)) === today);
+      const temps = todayRows.map(r => n(r.temperature_c)).filter(v => v !== null);
+      const hums = todayRows.map(r => n(r.humidity_percent)).filter(v => v !== null);
+
+      els.todayTempMin.textContent = temps.length ? `${Math.min(...temps).toFixed(1)} °C` : "--";
+      els.todayTempMax.textContent = temps.length ? `${Math.max(...temps).toFixed(1)} °C` : "--";
+      els.todayTempAvg.textContent = temps.length ? `${avg(temps).toFixed(1)} °C` : "--";
+      els.todayHumMin.textContent = hums.length ? `${Math.min(...hums).toFixed(1)} %` : "--";
+      els.todayHumMax.textContent = hums.length ? `${Math.max(...hums).toFixed(1)} %` : "--";
+      els.todayHumAvg.textContent = hums.length ? `${avg(hums).toFixed(1)} %` : "--";
+    }
+
+
+    function ageLabel(iso) {
+      if (!iso) return "--";
+      const ms = Date.now() - new Date(iso).getTime();
+      if (!Number.isFinite(ms)) return "--";
+      if (ms < 60000) return `${Math.max(0, Math.round(ms / 1000))} sec ago`;
+      if (ms < 3600000) return `${Math.round(ms / 60000)} min ago`;
+      if (ms < 86400000) return `${Math.round(ms / 3600000)} h ago`;
+      return `${Math.round(ms / 86400000)} d ago`;
+    }
+
+    function minOf(rows, field) {
+      const values = rows.map(r => n(r[field])).filter(v => v !== null);
+      return values.length ? Math.min(...values) : null;
+    }
+
+    function maxOf(rows, field) {
+      const values = rows.map(r => n(r[field])).filter(v => v !== null);
+      return values.length ? Math.max(...values) : null;
+    }
+
+    function avgOf(rows, field) {
+      return avg(rows.map(r => r[field]));
+    }
+
+    function getLast24Rows(rows) {
+      const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+      return rows.filter(row => {
+        const t = readingTime(row);
+        if (!t) return false;
+        const ms = new Date(t).getTime();
+        return Number.isFinite(ms) && ms >= cutoff;
+      });
+    }
+
+    function batteryText(row) {
+      if (!row || row.battery_percent === null || row.battery_percent === undefined) return "HW not connected";
+      const pct = Math.max(0, Math.min(100, Number(row.battery_percent)));
+      const volt = row.battery_voltage === null || row.battery_voltage === undefined ? "" : ` · ${fmtNumber(row.battery_voltage, 2)}V`;
+      return `${pct}%${volt}${row.charging_detected ? " · Charging" : ""}`;
+    }
+
+    function rssiQuality(rssi) {
+      const x = Number(rssi);
+      if (!Number.isFinite(x)) return "--";
+      if (x >= -60) return `${x} dBm · Strong`;
+      if (x >= -75) return `${x} dBm · OK`;
+      return `${x} dBm · Weak`;
+    }
+
+    function renderAlertBadges(row) {
+      if (!row) {
+        els.alertBadges.innerHTML = `<span class="badge bad">No readings yet</span>`;
+        return;
+      }
+
+      const badges = [];
+      const freshness = getDeviceFreshness(row);
+      badges.push({ text: freshness.label, cls: freshness.cls });
+
+      const temp = n(row.temperature_c);
+      if (temp === null) badges.push({ text: "Temp sensor missing", cls: "bad" });
+      else if (temp >= 35) badges.push({ text: "High temperature", cls: "bad" });
+      else if (temp >= 30) badges.push({ text: "Warm temperature", cls: "warn" });
+      else if (temp <= 18) badges.push({ text: "Cool temperature", cls: "info" });
+      else badges.push({ text: "Temperature OK", cls: "good" });
+
+      const hum = n(row.humidity_percent);
+      if (hum === null) badges.push({ text: "Humidity missing", cls: "bad" });
+      else if (hum >= 80) badges.push({ text: "High humidity", cls: "bad" });
+      else if (hum >= 70) badges.push({ text: "Humid air", cls: "warn" });
+      else if (hum <= 40) badges.push({ text: "Dry air", cls: "warn" });
+      else badges.push({ text: "Humidity OK", cls: "good" });
+
+      const hi = n(row.heat_index_c);
+      if (hi !== null && hi >= 40) badges.push({ text: "Heat index warning", cls: "bad" });
+      else if (hi !== null && hi >= 35) badges.push({ text: "Feels hot", cls: "warn" });
+
+      const sensor = String(row.sensor_status || "").toUpperCase();
+      badges.push(sensor.includes("OK") ? { text: "Sensor OK", cls: "good" } : { text: "Sensor check", cls: "bad" });
+
+      const rtc = String(row.rtc_status || "").toUpperCase();
+      badges.push(rtc.includes("OK") ? { text: "RTC OK", cls: "good" } : { text: "RTC check", cls: "warn" });
+
+      const batt = n(row.battery_percent);
+      if (batt !== null) {
+        if (batt <= 20) badges.push({ text: "Battery low", cls: "bad" });
+        else if (batt <= 40) badges.push({ text: "Battery medium", cls: "warn" });
+        else badges.push({ text: "Battery OK", cls: "good" });
+      }
+
+      const rssi = Number(row.wifi_rssi);
+      if (Number.isFinite(rssi)) {
+        if (rssi < -75) badges.push({ text: "Weak WiFi", cls: "warn" });
+        else badges.push({ text: "WiFi OK", cls: "good" });
+      }
+
+      els.alertBadges.innerHTML = badges.map(b => `<span class="badge ${b.cls}">${b.text}</span>`).join("");
+    }
+
+    function renderLast24Stats(rows) {
+      const dayRows = getLast24Rows(rows);
+      els.stat24Readings.textContent = String(dayRows.length);
+      els.stat24TempMin.textContent = `${fmtNumber(minOf(dayRows, "temperature_c"))} °C`;
+      els.stat24TempMax.textContent = `${fmtNumber(maxOf(dayRows, "temperature_c"))} °C`;
+      els.stat24TempAvg.textContent = `${fmtNumber(avgOf(dayRows, "temperature_c"))} °C`;
+      els.stat24HumMin.textContent = `${fmtNumber(minOf(dayRows, "humidity_percent"))} %`;
+      els.stat24HumMax.textContent = `${fmtNumber(maxOf(dayRows, "humidity_percent"))} %`;
+      els.stat24HumAvg.textContent = `${fmtNumber(avgOf(dayRows, "humidity_percent"))} %`;
+      els.stat24HeatMax.textContent = `${fmtNumber(maxOf(dayRows, "heat_index_c"))} °C`;
+      els.stat24Queued.textContent = String(dayRows.filter(r => r.queued_upload).length);
+    }
+
+    function renderDeviceHealth(row, rows) {
+      if (!row) {
+        els.healthWifi.textContent = "No data";
+        els.healthRssi.textContent = "--";
+        els.healthSensor.textContent = "--";
+        els.healthRtc.textContent = "--";
+        els.healthFirmware.textContent = "--";
+        els.healthDataAge.textContent = "--";
+        els.healthCloud.textContent = "--";
+        els.healthBattery.textContent = "--";
+        return;
+      }
+
+      els.healthWifi.textContent = row.wifi_status || getDeviceFreshness(row).label;
+      els.healthRssi.textContent = rssiQuality(row.wifi_rssi);
+      els.healthSensor.textContent = row.sensor_status || "--";
+      els.healthRtc.textContent = row.rtc_status || "--";
+      els.healthFirmware.textContent = row.firmware_version || "--";
+      els.healthDataAge.textContent = ageLabel(readingTime(row));
+      els.healthCloud.textContent = row.queued_upload ? "Recovered offline queue" : "Live upload";
+      els.healthBattery.textContent = batteryText(row);
+    }
+
+    function setupQrCard() {
+      els.publicDashboardLink.href = DASHBOARD_PUBLIC_URL;
+      els.publicDashboardLink.textContent = DASHBOARD_PUBLIC_URL;
+    }
+
+    function drawLineChart(canvas, rows, field, label, unit) {
       const ctx = canvas.getContext("2d");
       const dpr = window.devicePixelRatio || 1;
       const rect = canvas.getBoundingClientRect();
       canvas.width = Math.max(300, rect.width * dpr);
-      canvas.height = Math.max(160, rect.height * dpr);
-      ctx.scale(dpr, dpr);
+      canvas.height = Math.max(170, rect.height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
       const w = rect.width;
       const h = rect.height;
       ctx.clearRect(0, 0, w, h);
 
-      const ordered = [...rows].reverse();
-      const values = ordered.map(r => Number(r.temperature_c)).filter(v => Number.isFinite(v));
+      const ordered = [...rows].reverse().filter(r => n(r[field]) !== null).slice(-80);
+      const values = ordered.map(r => n(r[field]));
 
       if (values.length < 2) {
-        ctx.fillStyle = "rgba(255,255,255,0.62)";
+        ctx.fillStyle = "rgba(255,255,255,0.68)";
         ctx.font = "14px Arial";
-        ctx.fillText("Need at least 2 readings for chart", 18, 34);
+        ctx.fillText("Need at least 2 readings", 18, 34);
         return;
       }
 
-      const pad = 28;
+      const padL = 34;
+      const padR = 16;
+      const padT = 26;
+      const padB = 28;
       const minV = Math.min(...values) - 1;
       const maxV = Math.max(...values) + 1;
+      const span = Math.max(1, maxV - minV);
 
-      ctx.strokeStyle = "rgba(255,255,255,0.12)";
+      ctx.strokeStyle = "rgba(255,255,255,0.14)";
       ctx.lineWidth = 1;
       for (let i = 0; i < 4; i++) {
-        const y = pad + i * ((h - pad * 2) / 3);
+        const y = padT + i * ((h - padT - padB) / 3);
         ctx.beginPath();
-        ctx.moveTo(pad, y);
-        ctx.lineTo(w - pad, y);
+        ctx.moveTo(padL, y);
+        ctx.lineTo(w - padR, y);
         ctx.stroke();
       }
 
       function point(i, v) {
-        const x = pad + i * ((w - pad * 2) / (values.length - 1));
-        const y = h - pad - ((v - minV) / (maxV - minV)) * (h - pad * 2);
+        const x = padL + i * ((w - padL - padR) / (values.length - 1));
+        const y = h - padB - ((v - minV) / span) * (h - padT - padB);
         return { x, y };
       }
 
-      ctx.strokeStyle = "#67e8f9";
+      const grad = ctx.createLinearGradient(0, padT, w, h - padB);
+      grad.addColorStop(0, field.includes("humidity") ? "#80ffb0" : "#75e8ff");
+      grad.addColorStop(1, "rgba(255,255,255,0.35)");
+
+      ctx.strokeStyle = grad;
       ctx.lineWidth = 3;
       ctx.beginPath();
       values.forEach((v, i) => {
@@ -355,32 +930,60 @@
       });
       ctx.stroke();
 
-      ctx.fillStyle = "#67e8f9";
+      ctx.fillStyle = field.includes("humidity") ? "#80ffb0" : "#75e8ff";
       values.forEach((v, i) => {
         const p = point(i, v);
         ctx.beginPath();
-        ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, 2.8, 0, Math.PI * 2);
         ctx.fill();
       });
 
-      ctx.fillStyle = "rgba(255,255,255,0.72)";
+      ctx.fillStyle = "rgba(255,255,255,0.76)";
       ctx.font = "12px Arial";
-      ctx.fillText(`Temperature °C · ${values.length} readings`, pad, 16);
+      ctx.fillText(`${label} · last ${values.length} readings · ${unit}`, padL, 16);
+      ctx.fillText(`${maxV.toFixed(1)}`, 4, padT + 4);
+      ctx.fillText(`${minV.toFixed(1)}`, 4, h - padB + 4);
     }
 
     function renderTable(rows) {
       if (!rows.length) {
-        els.readingTable.innerHTML = `<tr><td colspan="5" class="muted">No readings found.</td></tr>`;
+        els.readingTable.innerHTML = `<tr><td colspan="6" class="muted">No readings found.</td></tr>`;
         return;
       }
 
-      els.readingTable.innerHTML = rows.slice(0, 10).map(row => `
+      els.readingTable.innerHTML = rows.slice(0, 14).map(row => {
+        const battery = row.battery_percent === null || row.battery_percent === undefined
+          ? "--"
+          : `${row.battery_percent}% ${fmtNumber(row.battery_voltage, 2)}V`;
+        return `
+          <tr>
+            <td>${fmtTime(readingTime(row))}</td>
+            <td>${fmtNumber(row.temperature_c)} °C</td>
+            <td>${fmtNumber(row.humidity_percent)} %</td>
+            <td>${fmtNumber(row.heat_index_c)} °C</td>
+            <td>${battery}</td>
+            <td>${row.queued_upload ? "Queued upload" : (row.comfort_status || "--")}</td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function renderSummaries(rows) {
+      if (!rows.length) {
+        els.summaryTable.innerHTML = `<tr><td colspan="8" class="muted">No daily summaries yet.</td></tr>`;
+        return;
+      }
+
+      els.summaryTable.innerHTML = rows.map(row => `
         <tr>
-          <td>${fmtTime(row.created_at)}</td>
-          <td>${fmtNumber(row.temperature_c)} °C</td>
-          <td>${fmtNumber(row.humidity_percent)} %</td>
-          <td>${fmtNumber(row.heat_index_c)} °C</td>
-          <td>${row.comfort_status || "--"}</td>
+          <td>${fmtDate(row.summary_date)}</td>
+          <td>${row.reading_count}</td>
+          <td>${fmtNumber(row.min_temperature_c)} °C</td>
+          <td>${fmtNumber(row.max_temperature_c)} °C</td>
+          <td>${fmtNumber(row.avg_temperature_c)} °C</td>
+          <td>${fmtNumber(row.min_humidity_percent)} %</td>
+          <td>${fmtNumber(row.max_humidity_percent)} %</td>
+          <td>${fmtNumber(row.avg_humidity_percent)} %</td>
         </tr>
       `).join("");
     }
@@ -390,10 +993,15 @@
         els.tempValue.textContent = "--";
         els.humValue.textContent = "--";
         els.heatValue.textContent = "--";
+        els.batteryValue.textContent = "No battery data";
+        els.batteryFill.style.width = "0%";
         els.comfortValue.textContent = "No data";
         els.systemValue.textContent = "No reading found";
         els.lastUpdateValue.textContent = "--";
+        els.queuedValue.textContent = "--";
         updateStatusPill({ label: "No data", cls: "bad" });
+        renderAlertBadges(null);
+        renderDeviceHealth(null, []);
         return;
       }
 
@@ -402,15 +1010,26 @@
       els.heatValue.textContent = fmtNumber(row.heat_index_c);
       els.comfortValue.textContent = row.comfort_status || "--";
       els.systemValue.textContent = `${row.sensor_status || "Sensor ?"} · RTC ${row.rtc_status || "?"}`;
-      els.lastUpdateValue.textContent = fmtTime(row.created_at);
-      updateStatusPill(getDeviceFreshness(row.created_at));
+      els.lastUpdateValue.textContent = fmtTime(readingTime(row));
+      els.queuedValue.textContent = row.queued_upload ? "Recovered offline reading" : "Live reading";
+
+      if (row.battery_percent === null || row.battery_percent === undefined) {
+        els.batteryValue.textContent = "Battery hardware not connected";
+        els.batteryFill.style.width = "0%";
+      } else {
+        const pct = Math.max(0, Math.min(100, Number(row.battery_percent)));
+        els.batteryValue.textContent = `${pct}% · ${fmtNumber(row.battery_voltage, 2)}V${row.charging_detected ? " · Charging" : ""}`;
+        els.batteryFill.style.width = `${pct}%`;
+      }
+
+      updateStatusPill(getDeviceFreshness(row));
     }
 
     async function loadDashboard() {
       clearError();
 
       if (SUPABASE_URL.includes("PASTE_") || SUPABASE_ANON_KEY.includes("PASTE_")) {
-        showError("Setup needed: paste your Supabase Project URL and anon key inside index.html.");
+        showError("Setup needed: paste your Supabase Project URL and publishable/anon key inside index.html.");
         els.connectionStatus.textContent = "Needs setup";
         els.connectionStatus.className = "status-pill bad";
         return;
@@ -420,11 +1039,12 @@
         .from(TABLE_NAME)
         .select("*")
         .eq("device_id", DEVICE_ID)
+        .order("captured_at", { ascending: false })
         .order("created_at", { ascending: false })
-        .limit(30);
+        .limit(500);
 
       if (error) {
-        showError(`Supabase error: ${error.message}`);
+        showError(`Supabase readings error: ${error.message}`);
         els.connectionStatus.textContent = "Database error";
         els.connectionStatus.className = "status-pill bad";
         return;
@@ -432,11 +1052,91 @@
 
       const rows = data || [];
       renderLatest(rows[0]);
+      renderAlertBadges(rows[0]);
+      renderLast24Stats(rows);
+      renderDeviceHealth(rows[0], rows);
+      renderTodayStats(rows);
       renderTable(rows);
-      drawChart(rows);
+      drawLineChart(els.tempChart, rows, "temperature_c", "Temperature", "°C");
+      drawLineChart(els.humChart, rows, "humidity_percent", "Humidity", "%");
+
+      const { data: daily, error: dailyError } = await client
+        .from(DAILY_VIEW_NAME)
+        .select("*")
+        .eq("device_id", DEVICE_ID)
+        .order("summary_date", { ascending: false })
+        .limit(14);
+
+      if (dailyError) {
+        els.summaryTable.innerHTML = `<tr><td colspan="8" class="muted">Daily summary view not ready: ${dailyError.message}</td></tr>`;
+      } else {
+        renderSummaries(daily || []);
+      }
     }
 
+    async function resetDatabaseData() {
+      const token = els.resetToken.value.trim();
+
+      if (!token) {
+        els.resetStatus.textContent = "Enter the device reset token first.";
+        return;
+      }
+
+      const ok = confirm("This will delete WeatherBot readings from Supabase. Continue?");
+      if (!ok) return;
+
+      els.resetStatus.textContent = "Resetting...";
+
+      const { data, error } = await client.rpc("reset_weather_readings", {
+        p_device_token: token,
+        p_device_id: DEVICE_ID
+      });
+
+      if (error) {
+        els.resetStatus.textContent = `Reset failed: ${error.message}`;
+        return;
+      }
+
+      els.resetStatus.textContent = `Reset complete. Deleted ${data?.deleted ?? "?"} rows.`;
+      els.resetToken.value = "";
+      await loadDashboard();
+    }
+
+    let screenTimer = null;
+
+    function setupScreenTimeout() {
+      const saved = localStorage.getItem("weatherbot_web_timeout_ms") || "0";
+      els.webTimeout.value = saved;
+
+      function wake() {
+        els.screenOff.classList.remove("active");
+        resetTimer();
+      }
+
+      function resetTimer() {
+        if (screenTimer) clearTimeout(screenTimer);
+        const timeout = Number(els.webTimeout.value);
+        if (!timeout) return;
+        screenTimer = setTimeout(() => els.screenOff.classList.add("active"), timeout);
+      }
+
+      els.webTimeout.addEventListener("change", () => {
+        localStorage.setItem("weatherbot_web_timeout_ms", els.webTimeout.value);
+        wake();
+      });
+
+      ["mousemove", "keydown", "click", "touchstart", "scroll"].forEach(eventName => {
+        window.addEventListener(eventName, wake, { passive: true });
+      });
+
+      resetTimer();
+    }
+
+    els.resetButton.addEventListener("click", resetDatabaseData);
     window.addEventListener("resize", () => loadDashboard());
+
+    setupQrCard();
+    setupScreenTimeout();
     loadDashboard();
     setInterval(loadDashboard, 10000);
   </script>
